@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 namespace ChessModule.Pieces
@@ -28,21 +29,46 @@ namespace ChessModule.Pieces
 
         public override bool CanAttack(Position position, bool RequireAttack)
         {
-            return base.CanAttack(position, RequireAttack) || Module.EnPassant.Equals(position);
+            bool EnPassant = Module.EnPassant.Equals(position);
+            return base.CanAttack(position, EnPassant || RequireAttack) || EnPassant;
         }
 
-        public override void AfterMove(Position NewPosition)
+        protected override bool AfterMove(Position NewPosition, string MoveString, Func<string, bool> Callback)
         {
-            if (FirstMove && CurrentPosition.Y - NewPosition.Y == 2)
+            if (NewPosition.Y == (PlayerColor == Color ? 0 : 7))
             {
-                Module.EnPassant.X = NewPosition.X;
-                Module.EnPassant.Y = CurrentPosition.Y - 1;
+                Position OldPosition = CurrentPosition;
+                Module.SetAllNone();
+                Module.promotionHandler.OnSelected = (piece, material) =>
+                {
+                    char PieceName = piece.Name[0];
+                    MoveString += PieceName == 'K' ? 'N' : PieceName;
+                    if (Callback(MoveString))
+                    {
+                        Destroy();
+                        Module.Board[NewPosition.Y, NewPosition.X] =
+                            (ChessPiece) Activator.CreateInstance(piece, NewPosition, material, Module, PlayerColor);
+                    }
+                    else CurrentPosition = OldPosition;
+                };
+                return true;
             }
-            FirstMove = false;
-            if (CurrentPosition.Y == 0)
+            if (Callback(MoveString))
             {
-                //TODO: Promotion
+                int Delta = CurrentPosition.Y - NewPosition.Y;
+                int decrement = Delta < 0 ? -1 : 1;
+                if (Module.EnPassant.Equals(NewPosition))
+                    Module.Board[NewPosition.Y + decrement, NewPosition.X].Destroy();
+                if (FirstMove && Math.Abs(Delta) == 2)
+                {
+                    Module.EnPassant.X = NewPosition.X;
+                    Module.EnPassant.Y = CurrentPosition.Y - decrement;
+                }
+
+                FirstMove = false;
+                return true;
             }
+            return false;
         }
         
         public Pawn(Position position, string material, qkChessModule module, char PlayColor) : 

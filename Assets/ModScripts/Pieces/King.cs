@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 namespace ChessModule.Pieces
@@ -29,13 +30,19 @@ namespace ChessModule.Pieces
             return moves.ToArray();
         }
 
-        public override void AfterMove(Position NewPosizion)
+        protected override bool AfterMove(Position NewPosition, string MoveString, Func<string, bool> Callback)
         {
-            HasMoved = true;
-            if (NewPosizion.X - CurrentPosition.X == 2)
-                Module.Board[7, 7].HandleMove(new Position(5, 7));
-            if(NewPosizion.X - CurrentPosition.X == -2)
-                Module.Board[0, 7].HandleMove(new Position(3, 7));
+            if (Callback(MoveString))
+            {
+                HasMoved = true;
+                if (NewPosition.X - CurrentPosition.X == 2)
+                    Module.Board[7, 7].HandleMove(new Position(5, 7));
+                if (NewPosition.X - CurrentPosition.X == -2)
+                    Module.Board[0, 7].HandleMove(new Position(3, 7));
+                return true;
+            }
+
+            return false;
         }
 
         private char GetCastle(char CastleType)

@@ -58,7 +58,7 @@ GameObject:
   - component: {fileID: 114097197289469876}
   - component: {fileID: 114115494432661880}
   m_Layer: 0
-  m_Name: Piece
+  m_Name: HorseyPiece
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

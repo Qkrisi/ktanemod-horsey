@@ -3,7 +3,7 @@ using ChessModule.Pieces;
 
 public class PieceInfo
 {
-    private readonly Type type;
+    public readonly Type type;
     public readonly string MaterialName;
 
     public ChessPiece Create(Position position, qkChessModule module, char PlayColor)

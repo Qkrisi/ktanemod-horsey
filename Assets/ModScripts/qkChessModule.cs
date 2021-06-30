@@ -11,6 +11,11 @@ public class qkChessModule : MonoBehaviour
     public GameObject PiecePrefab;
     
     public Dictionary<string, Material> Materials = new Dictionary<string, Material>();
+
+    public Material GreenMaterial;
+    public Material BlueMaterial;
+
+    public PromotionHandler promotionHandler;
     
     [SerializeField]
     private List<Material> _Materials = new List<Material>();
@@ -23,9 +28,25 @@ public class qkChessModule : MonoBehaviour
 
     public Position EnPassant;
 
-    public ChessPiece SelectedPiece;
+    private ChessPiece _SelectedPiece;
+    
+    public ChessPiece SelectedPiece
+    {
+        get
+        {
+            return _SelectedPiece;
+        }
+        set
+        {
+            if (_SelectedPiece != null)
+                ChangeColor(ToggleHighlight(_SelectedPiece.CurrentPosition, false, true), GreenMaterial);
+            _SelectedPiece = value;
+            if(_SelectedPiece != null)
+                ChangeColor(ToggleHighlight(_SelectedPiece.CurrentPosition, true, true), BlueMaterial);
+        }
+    }
 
-    private readonly Dictionary<char, PieceInfo> PieceInfos = new Dictionary<char, PieceInfo>()
+    public readonly Dictionary<char, PieceInfo> PieceInfos = new Dictionary<char, PieceInfo>()
     {
         {'P', new PieceInfo(typeof(Pawn), "Pawn_White")},
         {'N', new PieceInfo(typeof(Knight), "Knight_White")},
@@ -40,13 +61,63 @@ public class qkChessModule : MonoBehaviour
         {'q', new PieceInfo(typeof(Queen), "Queen_Black")},
         {'k', new PieceInfo(typeof(King), "King_Black")}
     };
-
+    
     private char CurrentPlayer;
     private char PlayerColor;
+
+    [HideInInspector]
+    public char AutoPromote;
+
+    public bool SubmitMovement(string MovementString)
+    {
+        MovementString = MovementString.ToLowerInvariant();
+        Debug.LogFormat("Expected move: {0}, Moved: {1}", CurrentPuzzle.CurrentMove.Value, MovementString);
+        if (CurrentPuzzle.CurrentMove.Value == MovementString)
+        {
+            CurrentPuzzle.CurrentMove = CurrentPuzzle.CurrentMove.Next;
+            if (CurrentPuzzle.CurrentMove == null)
+            {
+                SetAllNone();
+                GetComponent<KMBombModule>().HandlePass();
+            }
+            else TogglePlayer(); 
+            return true;
+        }
+        GetComponent<KMBombModule>().HandleStrike();
+        ResetSelections(null);
+        return false;
+    }
+
+    public void PlaySound(GameObject piece)
+    {
+        GetComponent<KMAudio>().PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, piece.transform);
+    }
+    
+    private void ChangeColor(Transform highlight, Material color)
+    {
+        foreach (Transform child in highlight)
+            child.GetComponent<Renderer>().material = color;
+    }
+
+    void HandleOpponent()
+    {
+        SetAllNone();
+        string MoveString = CurrentPuzzle.CurrentMove.Value;
+        Position StartPos = Position.FromA1(MoveString.Substring(0, 2));
+        AutoPromote = MoveString.Length == 5 ? MoveString[4] : '_';
+        if (PlayerColor == 'B')
+            AutoPromote = AutoPromote.ToString().ToUpperInvariant()[0];
+        Debug.LogFormat("Piece type: {0}", Board[StartPos.Y, StartPos.X].type);
+        Debug.Log(StartPos.ToString());
+        Board[StartPos.Y, StartPos.X].HandleMove(Position.FromA1(MoveString.Substring(2, 2)));
+    }
     
     private void TogglePlayer()
     {
         CurrentPlayer = CurrentPlayer == 'W' ? 'B' : 'W';
+        if (CurrentPlayer != PlayerColor)
+            HandleOpponent();
+        else ResetSelections(null);
     }
 
     private void ParseFEN()
@@ -94,6 +165,8 @@ public class qkChessModule : MonoBehaviour
                 }
             }
         }
+        promotionHandler.Initialize(this, PlayerColor == 'W' ? "White" : "Black");
+        HandleOpponent();
     }
 
     void Initialize()
@@ -162,11 +235,14 @@ public class qkChessModule : MonoBehaviour
     public Transform HighlightObject;
 
     private Dictionary<string, GameObject> Highlights = new Dictionary<string, GameObject>();
-    public void ToggleHighlight(Position position, bool state)
+    public Transform ToggleHighlight(Position position, bool state, bool force = false)
     {
+        if (!force && SelectedPiece != null && SelectedPiece.CurrentPosition.Equals(position))
+            return null;
         string HighlightName = String.Format("{0}-{1}", position.Y, position.X);
         if(!Highlights.ContainsKey(HighlightName))
             Highlights.Add(HighlightName, HighlightObject.Find(HighlightName).gameObject);
         Highlights[HighlightName].SetActive(state);
+        return Highlights[HighlightName].transform;
     }
 }

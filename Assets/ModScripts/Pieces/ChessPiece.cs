@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace ChessModule.Pieces
 {
@@ -37,7 +39,9 @@ namespace ChessModule.Pieces
 
         public Position CurrentPosition;
         
-        private readonly char PlayerColor;
+        protected readonly char PlayerColor;
+
+        private bool SelectableEnabled;
 
         public virtual Movement[] GetPossibleMovements(Position position)
         {
@@ -60,19 +64,21 @@ namespace ChessModule.Pieces
             return (!RequireAttack || OtherPiece.type != PieceType.Empty) && OtherPiece.Color != Color;
         }
 
-        public virtual void AfterMove(Position NewPosition)
+        protected virtual bool AfterMove(Position NewPosition, string MoveString, Func<string, bool> Callback)
         {
+            return Callback(MoveString);
         }
 
         public void HandleMove(Position NewPosition)
         {
+            Debug.LogFormat("New position: {0}", NewPosition.ToString());
             Module.SetAllNone();
             Module.EnPassant.X = -1;
             Module.EnPassant.Y = -1;
             Module.StartCoroutine(MovePiece(NewPosition));
         }
 
-        IEnumerator MovePiece(Position NewPosition)
+        IEnumerator MoveTo(Position NewPosition)
         {
             Vector3 finish = RelativeToAbsolute(NewPosition);
             while (Vector3.Distance(Piece.transform.localPosition, finish) >= 0.001f)
@@ -81,19 +87,45 @@ namespace ChessModule.Pieces
                     Vector3.MoveTowards(Piece.transform.localPosition, finish, .25f * Time.deltaTime);
                 yield return null;
             }
-            AfterMove(NewPosition);
-            Module.Board[NewPosition.Y, NewPosition.X].Destroy(CurrentPosition);
-            CurrentPosition = NewPosition;
-            Module.Board[NewPosition.Y, NewPosition.X] = this;
-            //Piece.transform.localPosition = RelativeToAbsolute(NewPosition);
-            SetInteraction(InteractionType.Select);
+        }
+        
+        IEnumerator MovePiece(Position NewPosition)
+        {
+            SetInteraction(InteractionType.None);
+            yield return MoveTo(NewPosition);
+            Position OldPosition = CurrentPosition;
+            Func<string, bool> CB = MoveString =>
+            {
+                if (!Module.SubmitMovement(MoveString))
+                {
+                    Debug.Log("Moving back");
+                    Module.StartCoroutine(MoveTo(OldPosition));
+                    return false;
+                }
+
+                Module.Board[NewPosition.Y, NewPosition.X].Destroy(OldPosition);
+                Module.Board[NewPosition.Y, NewPosition.X] = this;
+                //Piece.transform.localPosition = RelativeToAbsolute(NewPosition);
+                return true;
+            };
+            if(AfterMove(NewPosition, String.Format("{0}{1}{2}{3}", Position.Letters[CurrentPosition.X], CurrentPosition.Y+1,
+                Position.Letters[NewPosition.X], NewPosition.Y+1), CB))
+                CurrentPosition = NewPosition;
         }
 
         public void Destroy(Position position)
         {
+            Module.ToggleHighlight(position, false, true);
+            if (!CurrentPosition.Equals(position))
+                Module.ToggleHighlight(CurrentPosition, false, true);
             SetInteraction(InteractionType.None);
             Object.Destroy(Piece);
             Module.Board[position.Y, position.X] = new Empty(position, Module, PlayerColor);
+        }
+
+        public void Destroy()
+        {
+            Destroy(CurrentPosition);
         }
 
         private Vector3 RelativeToAbsolute(Position position)
@@ -116,7 +148,7 @@ namespace ChessModule.Pieces
             ModuleSelectable = Module.GetComponent<KMSelectable>();
             PieceSelectable = Piece.GetComponent<KMSelectable>();
             PieceSelectable.Parent = ModuleSelectable;
-            PieceSelectable.OnHighlight += () => Module.ToggleHighlight(CurrentPosition, true);
+            PieceSelectable.OnHighlight += () => Module.ToggleHighlight(CurrentPosition, SelectableEnabled);
             PieceSelectable.OnHighlightEnded += () => Module.ToggleHighlight(CurrentPosition, false);
             Material mat = Module.Materials[material];
             Renderer renderer = Piece.GetComponent<Renderer>();
@@ -129,7 +161,7 @@ namespace ChessModule.Pieces
 
         private bool Select()
         {
-            Debug.Log("Selected");
+            Module.PlaySound(Piece);
             Module.SelectedPiece = this;
             Module.SelectPiece();
             return false;
@@ -137,6 +169,7 @@ namespace ChessModule.Pieces
 
         private bool Move()
         {
+            Module.PlaySound(Piece);
             Module.SelectedPiece.HandleMove(CurrentPosition);
             Module.SelectedPiece = null;
             return false;
@@ -145,6 +178,7 @@ namespace ChessModule.Pieces
         public void SetInteraction(InteractionType interaction)
         {
             MoveObject.SetActive(false);
+            SelectableEnabled = true;
             var children = ModuleSelectable.Children.ToList();
             switch (interaction)
             {
@@ -156,6 +190,7 @@ namespace ChessModule.Pieces
                         ModuleSelectable.UpdateChildren();
                     }
                     PieceSelectable.OnInteract = () => false;
+                    SelectableEnabled = false;
                     break;
                 case InteractionType.Move:
                     PieceSelectable.OnInteract = Move;

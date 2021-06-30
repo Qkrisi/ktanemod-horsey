@@ -1,12 +1,19 @@
+using System;
+
 namespace ChessModule.Pieces
 {
     public class Rook : ChessPiece
     {
         public bool HasMoved;
 
-        public override void AfterMove(Position NewPosizion)
+        protected override bool AfterMove(Position NewPosition, string MoveString, Func<string, bool> Callback)
         {
-            HasMoved = true;
+            if (Callback(MoveString))
+            {
+                HasMoved = true;
+                return true;
+            }
+            return false;
         }
 
         public Rook(Position position, string material, qkChessModule module, char PlayColor) : 

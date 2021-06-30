@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public struct Movement
 {
@@ -34,15 +35,17 @@ public struct Position
 
     public static readonly char[] Letters = new char[8]
     {
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'
+        'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'
     };
 
     public static Position FromA1(string pos)
     {
         pos = pos.ToUpperInvariant();
         Position _pos;
+        Debug.Log(pos);
+        Debug.Log(Array.IndexOf(Letters, pos[0]));
         _pos.X = Array.IndexOf(Letters, pos[0]);
-        _pos.Y = int.Parse(pos[1].ToString());
+        _pos.Y = int.Parse(pos[1].ToString())-1;
         return _pos;
     }
 }

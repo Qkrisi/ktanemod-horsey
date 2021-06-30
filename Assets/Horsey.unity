@@ -233,11 +233,6 @@ Prefab:
       propertyPath: m_RootOrder
       value: 4
       objectReference: {fileID: 0}
-    - target: {fileID: 114828911304669888, guid: ef105b583127c47338578fd2c7db8029,
-        type: 2}
-      propertyPath: _Puzzles
-      value: 
-      objectReference: {fileID: 4900000, guid: f4d65c83d3f7c48739f87b94bfdfd3d8, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ef105b583127c47338578fd2c7db8029, type: 2}
   m_IsPrefabParent: 0

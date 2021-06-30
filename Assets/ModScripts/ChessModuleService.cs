@@ -30,13 +30,13 @@ public class ChessModuleService : MonoBehaviour
     [SerializeField]
     private TextAsset _Puzzles;
     
-    private static string[] ChessPuzzles;
+    private static List<string> ChessPuzzles;
 
     public static Puzzle ParsedPuzzle
     {
         get
         {
-            string[] line = ChessPuzzles[Random.Range(0, ChessPuzzles.Length)].Trim().Split(',');
+            string[] line = ChessPuzzles[Random.Range(0, ChessPuzzles.Count)].Trim().Split(',');
             var moves = new LinkedList<string>(line[2].Split(' '));
             return new Puzzle
             {
@@ -61,7 +61,7 @@ public class ChessModuleService : MonoBehaviour
             int LastIndex = PuzzleList.Count - 1;
             if(String.IsNullOrEmpty(PuzzleList[LastIndex]))
                 PuzzleList.RemoveAt(LastIndex);
-            ChessPuzzles = PuzzleList.ToArray();
+            ChessPuzzles = PuzzleList;
         }
     }
 }
