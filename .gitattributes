@@ -1,0 +1,2 @@
+*puzzles.csv filter=lfs diff=lfs merge=lfs -text
+Assets/puzzles.csv filter=lfs diff=lfs merge=lfs -text
