@@ -48,10 +48,13 @@ namespace ChessModule.Pieces
                         Destroy();
                         Module.Board[NewPosition.Y, NewPosition.X] =
                             (ChessPiece) Activator.CreateInstance(piece, NewPosition, material, Module, PlayerColor);
+                        CurrentPosition = NewPosition;
+                        Module.Kings[OtherColor].ToggleCheckMove();
+                        Module.Kings[Color].MoveObject.SetActive(false);
+                        Module.ClearKingCaches();
                     }
-                    else CurrentPosition = OldPosition;
                 };
-                return true;
+                return false;
             }
             if (Callback(MoveString))
             {

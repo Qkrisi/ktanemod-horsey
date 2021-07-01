@@ -38,14 +38,18 @@ public struct Position
         'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'
     };
 
-    public static Position FromA1(string pos)
+    public static Position FromA1(string pos, bool reverse = false)
     {
         pos = pos.ToUpperInvariant();
         Position _pos;
         Debug.Log(pos);
         Debug.Log(Array.IndexOf(Letters, pos[0]));
         _pos.X = Array.IndexOf(Letters, pos[0]);
+        if (reverse)
+            _pos.X = 7 - _pos.X;
         _pos.Y = int.Parse(pos[1].ToString())-1;
+        if (reverse)
+            _pos.Y = 7 - _pos.Y;
         return _pos;
     }
 }

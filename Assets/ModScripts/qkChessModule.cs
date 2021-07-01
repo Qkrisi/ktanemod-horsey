@@ -62,6 +62,8 @@ public class qkChessModule : MonoBehaviour
         {'k', new PieceInfo(typeof(King), "King_Black")}
     };
     
+    public Dictionary<char, King> Kings = new Dictionary<char, King>();
+    
     private char CurrentPlayer;
     private char PlayerColor;
 
@@ -103,13 +105,14 @@ public class qkChessModule : MonoBehaviour
     {
         SetAllNone();
         string MoveString = CurrentPuzzle.CurrentMove.Value;
-        Position StartPos = Position.FromA1(MoveString.Substring(0, 2));
-        AutoPromote = MoveString.Length == 5 ? MoveString[4] : '_';
+        bool reverse = PlayerColor == 'W';
+        Position StartPos = Position.FromA1(MoveString.Substring(0, 2), reverse);
+        AutoPromote = MoveString.Length == 5 ? MoveString.ToLowerInvariant()[4] : '_';
         if (PlayerColor == 'B')
             AutoPromote = AutoPromote.ToString().ToUpperInvariant()[0];
         Debug.LogFormat("Piece type: {0}", Board[StartPos.Y, StartPos.X].type);
         Debug.Log(StartPos.ToString());
-        Board[StartPos.Y, StartPos.X].HandleMove(Position.FromA1(MoveString.Substring(2, 2)));
+        Board[StartPos.Y, StartPos.X].HandleMove(Position.FromA1(MoveString.Substring(2, 2), reverse));
     }
     
     private void TogglePlayer()
@@ -166,7 +169,15 @@ public class qkChessModule : MonoBehaviour
             }
         }
         promotionHandler.Initialize(this, PlayerColor == 'W' ? "White" : "Black");
+        foreach(var king in Kings.Values)
+            king.ToggleCheckMove();
         HandleOpponent();
+    }
+
+    public void ClearKingCaches()
+    {
+        foreach (var king in Kings.Values)
+            king.CheckCache.Clear();
     }
 
     void Initialize()
@@ -223,7 +234,7 @@ public class qkChessModule : MonoBehaviour
                 if (!IsValid(CurrentPosition))
                     break;
                 ChessPiece OtherPiece = Board[CurrentPosition.Y, CurrentPosition.X];
-                if(SelectedPiece.CanAttack(CurrentPosition, movement.RequiresAttack))
+                if(SelectedPiece.CanAttack(CurrentPosition, movement.RequiresAttack) && !Kings[PlayerColor].IsInCheck(CurrentPosition, SelectedPiece.CurrentPosition, SelectedPiece))
                     OtherPiece.SetInteraction(InteractionType.Move);
                 if (OtherPiece.type != PieceType.Empty)
                     break;

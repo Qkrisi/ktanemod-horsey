@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -31,9 +32,10 @@ namespace ChessModule.Pieces
         private KMSelectable ModuleSelectable;
         private KMSelectable PieceSelectable;
         public readonly char Color;
+        protected readonly char OtherColor;
 
         public PieceType type;
-        private GameObject MoveObject;
+        public GameObject MoveObject;
 
         private string PieceName;
 
@@ -42,6 +44,8 @@ namespace ChessModule.Pieces
         protected readonly char PlayerColor;
 
         private bool SelectableEnabled;
+
+        protected bool ForceMoveObject = false;
 
         public virtual Movement[] GetPossibleMovements(Position position)
         {
@@ -88,6 +92,25 @@ namespace ChessModule.Pieces
                 yield return null;
             }
         }
+
+        private Dictionary<char, char> ReversedChars = new Dictionary<char, char>()
+        {
+            {'A', 'H'},
+            {'B', 'G'},
+            {'C', 'F'},
+            {'D', 'E'},
+            {'E', 'D'},
+            {'F', 'C'},
+            {'G', 'B'},
+            {'H', 'A'}
+        };
+
+        private string ReverseA1(string pos)
+        {
+            return PlayerColor == 'B'
+                ? pos
+                : String.Format("{0}{1}", ReversedChars[pos[0]], 9 - int.Parse(pos[1].ToString()));
+        }
         
         IEnumerator MovePiece(Position NewPosition)
         {
@@ -108,9 +131,15 @@ namespace ChessModule.Pieces
                 //Piece.transform.localPosition = RelativeToAbsolute(NewPosition);
                 return true;
             };
-            if(AfterMove(NewPosition, String.Format("{0}{1}{2}{3}", Position.Letters[CurrentPosition.X], CurrentPosition.Y+1,
-                Position.Letters[NewPosition.X], NewPosition.Y+1), CB))
+            string pos1 = String.Format("{0}{1}", Position.Letters[CurrentPosition.X], CurrentPosition.Y + 1);
+            string pos2 = String.Format("{0}{1}", Position.Letters[NewPosition.X], NewPosition.Y + 1);
+            if (AfterMove(NewPosition, String.Format("{0}{1}", ReverseA1(pos1), ReverseA1(pos2)), CB))
+            {
                 CurrentPosition = NewPosition;
+                Module.Kings[OtherColor].ToggleCheckMove();
+                Module.Kings[Color].MoveObject.SetActive(false);
+                Module.ClearKingCaches();
+            }
         }
 
         public void Destroy(Position position)
@@ -140,6 +169,7 @@ namespace ChessModule.Pieces
             var splitted = material.Split('_');
             PieceName = material;
             Color = splitted[1][0];
+            OtherColor = Color == 'W' ? 'B' : 'W';
             Module = module;
             Piece = Object.Instantiate(Module.PiecePrefab, Module.transform.Find("Objects").Find("Pieces"));
             Piece.transform.localPosition = RelativeToAbsolute(position);
@@ -177,7 +207,7 @@ namespace ChessModule.Pieces
 
         public void SetInteraction(InteractionType interaction)
         {
-            MoveObject.SetActive(false);
+            MoveObject.SetActive(ForceMoveObject);
             SelectableEnabled = true;
             var children = ModuleSelectable.Children.ToList();
             switch (interaction)
