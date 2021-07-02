@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using UnityEngine;
 
 namespace ChessModule.Pieces
 {
@@ -14,14 +15,13 @@ namespace ChessModule.Pieces
                 moves.RemoveAt(0);
             else if (FirstMove)
                 moves[0] = new Movement(0, -1, 2);
-            position.Y++;
-            if (position.Y >= 0)
+            if (--position.Y >= 0)
             {
                 position.X++;
                 if (position.X < 8 && CanAttack(position, true))
                     moves.Add(new Movement(1, -1, requiresAttack: true));
                 position.X -= 2;
-                if(position.X > -1 && CanAttack(position, true))
+                if (position.X > -1 && CanAttack(position, true))
                     moves.Add(new Movement(-1, -1, requiresAttack: true));
             }
             return moves.ToArray();
@@ -29,8 +29,7 @@ namespace ChessModule.Pieces
 
         public override bool CanAttack(Position position, bool RequireAttack)
         {
-            bool EnPassant = Module.EnPassant.Equals(position);
-            return base.CanAttack(position, EnPassant || RequireAttack) || EnPassant;
+            return Module.EnPassant.Equals(position) || base.CanAttack(position, RequireAttack);
         }
 
         protected override bool AfterMove(Position NewPosition, string MoveString, Func<string, bool> Callback)
