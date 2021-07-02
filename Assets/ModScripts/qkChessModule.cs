@@ -72,21 +72,30 @@ public class qkChessModule : MonoBehaviour
     [HideInInspector]
     public char AutoPromote;
 
+    private static int ModuleIDCounter;
+    private int ModuleID;
+    
+    [HideInInspector]
+    public bool SelectEnabled;
+
     public bool SubmitMovement(string MovementString)
     {
         MovementString = MovementString.ToLowerInvariant();
-        Debug.LogFormat("Expected move: {0}, Moved: {1}", CurrentPuzzle.CurrentMove.Value, MovementString);
+        Log("Expected move: {0}, Moved: {1}", CurrentPuzzle.CurrentMove.Value, MovementString);
         if (CurrentPuzzle.CurrentMove.Value == MovementString)
         {
+            Log("Correct move. Advancing...");
             CurrentPuzzle.CurrentMove = CurrentPuzzle.CurrentMove.Next;
             if (CurrentPuzzle.CurrentMove == null)
             {
                 SetAllNone();
+                Log("All moves were successful! Solving module...");
                 GetComponent<KMBombModule>().HandlePass();
             }
             else TogglePlayer(); 
             return true;
         }
+        Log("Incorrect move. Strike!");
         GetComponent<KMBombModule>().HandleStrike();
         ResetSelections(null);
         return false;
@@ -103,17 +112,20 @@ public class qkChessModule : MonoBehaviour
             child.GetComponent<Renderer>().material = color;
     }
 
+    private void Log(string message, params object[] args)
+    {
+        Debug.LogFormat("[Horsey #{0}] {1}", ModuleID, String.Format(message, args));
+    }
+
     void HandleOpponent()
     {
-        SetAllNone();
+		SetAllNone();
         string MoveString = CurrentPuzzle.CurrentMove.Value;
         bool reverse = PlayerColor == 'W';
         Position StartPos = Position.FromA1(MoveString.Substring(0, 2), reverse);
         AutoPromote = MoveString.Length == 5 ? MoveString.ToLowerInvariant()[4] : '_';
         if (PlayerColor == 'B')
             AutoPromote = AutoPromote.ToString().ToUpperInvariant()[0];
-        Debug.LogFormat("Piece type: {0}", Board[StartPos.Y, StartPos.X].type);
-        Debug.Log(StartPos.ToString());
         Board[StartPos.Y, StartPos.X].HandleMove(Position.FromA1(MoveString.Substring(2, 2), reverse));
     }
     
@@ -127,8 +139,8 @@ public class qkChessModule : MonoBehaviour
 
     private void ParseFEN()
     {
-        Debug.LogFormat("Game URL: {0}", CurrentPuzzle.TrainingUrl);
-        Debug.LogFormat("FEN: {0}", CurrentPuzzle.FEN);
+        Log("Game URL: {0}", CurrentPuzzle.TrainingUrl);
+        Log("FEN: {0}", CurrentPuzzle.FEN);
         var splitted = CurrentPuzzle.FEN.Split(' ');
         PlayerColor = splitted[1] == "w" ? 'B' : 'W';
         if (splitted[3] != "-")
@@ -148,7 +160,6 @@ public class qkChessModule : MonoBehaviour
                 Position pos = new Position(row, col);
                 if (char.IsDigit(piece))
                 {
-                    Debug.Log("Creating empty");
                     Board[col, row] = new Empty(pos, this, PlayerColor);
                     int n = int.Parse(piece.ToString()) - 1;
                     for (int a = 0; a < n; a++)
@@ -157,21 +168,13 @@ public class qkChessModule : MonoBehaviour
                         col = PlayerColor == 'W' ? i : 7 - i;
                         row = PlayerColor == 'W' ? j : 7 - j;
                         pos = new Position(row, col);
-                        Debug.Log("Creating empty");
                         Board[col, row] = new Empty(pos, this, PlayerColor);
                     }
                 }
                 else
-                {
-                    Debug.LogFormat("Creating {0}", PieceInfos[piece].MaterialName);
                     Board[col, row] = PieceInfos[piece].Create(pos, this, PlayerColor);
-                }
             }
         }
-        promotionHandler.Initialize(this, PlayerColor == 'W' ? "White" : "Black");
-        foreach(var king in Kings.Values)
-            king.ToggleCheckMove();
-        HandleOpponent();
     }
 
     public void ClearKingCaches()
@@ -192,14 +195,21 @@ public class qkChessModule : MonoBehaviour
     
     void Awake()
     {
+        ModuleIDCounter = 0;
         if(!Application.isEditor)
             Initialize();
     }
 
     void Start()
     {
+        ModuleID = ++ModuleIDCounter;
         if(Application.isEditor)
             Initialize();
+        promotionHandler.Initialize(this, PlayerColor == 'W' ? "White" : "Black");
+        foreach(var king in Kings.Values)
+            king.ToggleCheckMove();
+        HandleOpponent();
+        SelectEnabled = true;
     }
 
     public static bool IsValid(Position position)

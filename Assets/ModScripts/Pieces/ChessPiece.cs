@@ -197,9 +197,12 @@ namespace ChessModule.Pieces
 
         private bool Select()
         {
-            Module.PlaySound(Piece);
-            Module.SelectedPiece = this;
-            Module.SelectPiece();
+			if(Module.SelectEnabled)
+			{
+				Module.PlaySound(Piece);
+				Module.SelectedPiece = this;
+				Module.SelectPiece();
+			}
             return false;
         }
 
