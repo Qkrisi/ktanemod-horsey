@@ -77,8 +77,6 @@ namespace ChessModule.Pieces
         {
             Debug.LogFormat("New position: {0}", NewPosition.ToString());
             Module.SetAllNone();
-            Module.EnPassant.X = -1;
-            Module.EnPassant.Y = -1;
             Module.StartCoroutine(MovePiece(NewPosition, SkipSubmit));
         }
 
@@ -130,7 +128,7 @@ namespace ChessModule.Pieces
                     Module.StartCoroutine(MoveTo(OldPosition));
                     return false;
                 }
-
+                
                 Module.Board[NewPosition.Y, NewPosition.X].Destroy(OldPosition);
                 Module.Board[NewPosition.Y, NewPosition.X] = this;
                 //Piece.transform.localPosition = RelativeToAbsolute(NewPosition);
@@ -142,6 +140,11 @@ namespace ChessModule.Pieces
                 Module.Kings[OtherColor].ToggleCheckMove();
                 Module.Kings[Color].MoveObject.SetActive(false);
                 Module.ClearKingCaches();
+                if (type != PieceType.Pawn && type != PieceType.Empty)
+                {
+                    Module.EnPassant.X = -1;
+                    Module.EnPassant.Y = -1;
+                }
             }
         }
 

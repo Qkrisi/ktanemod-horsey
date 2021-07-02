@@ -50,20 +50,26 @@ namespace ChessModule.Pieces
                         Module.Kings[OtherColor].ToggleCheckMove();
                         Module.Kings[Color].MoveObject.SetActive(false);
                         Module.ClearKingCaches();
+                        Module.EnPassant.X = -1;
+                        Module.EnPassant.Y = -1;
                     }
                 };
                 return false;
             }
             if (Callback(MoveString))
             {
-                int Delta = CurrentPosition.Y - NewPosition.Y;
                 int decrement = Color != PlayerColor ? -1 : 1;
                 if (Module.EnPassant.Equals(NewPosition))
                     Module.Board[NewPosition.Y + decrement, NewPosition.X].Destroy();
-                if (FirstMove && Math.Abs(Delta) == 2)
+                if (FirstMove && Math.Abs(CurrentPosition.Y - NewPosition.Y) == 2)
                 {
                     Module.EnPassant.X = NewPosition.X;
                     Module.EnPassant.Y = CurrentPosition.Y - decrement;
+                }
+                else
+                {
+                    Module.EnPassant.X = -1;
+                    Module.EnPassant.Y = -1;
                 }
                 FirstMove = false;
                 return true;

@@ -130,10 +130,10 @@ public class qkChessModule : MonoBehaviour
         Debug.LogFormat("Game URL: {0}", CurrentPuzzle.TrainingUrl);
         Debug.LogFormat("FEN: {0}", CurrentPuzzle.FEN);
         var splitted = CurrentPuzzle.FEN.Split(' ');
-        if (splitted[3] != "-")
-            EnPassant = Position.FromA1(splitted[3]);
-        Castlings = splitted[2].ToCharArray();
         PlayerColor = splitted[1] == "w" ? 'B' : 'W';
+        if (splitted[3] != "-")
+            EnPassant = Position.FromA1(splitted[3], PlayerColor == 'W');
+        Castlings = splitted[2].ToCharArray();
         CurrentPlayer = splitted[1].ToUpperInvariant()[0];
         var Positions = splitted[0].Split('/');
         int AddEmpty = 0;
