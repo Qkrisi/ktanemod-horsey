@@ -21713,6 +21713,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b49c7f7fb3b4d048e84168edc6de780, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  EnableCheckCastle: 0
   PiecePrefab: {fileID: 1553156903591314, guid: 600c88dec4edf4d5387b451f35cf65f7,
     type: 2}
   GreenMaterial: {fileID: 2100000, guid: e4d9bad1c72394709a3ba40780e0027d, type: 2}

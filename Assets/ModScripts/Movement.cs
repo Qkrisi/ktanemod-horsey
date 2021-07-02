@@ -1,19 +1,33 @@
 using System;
 using UnityEngine;
 
+public class CastleInfo
+{
+    public readonly Position EmptyPosition;
+    public readonly Position FillPosition;
+
+    public CastleInfo(Position empty, Position fill)
+    {
+        EmptyPosition = empty;
+        FillPosition = fill;
+    }
+}
+
 public struct Movement
 {
     public readonly int Horizontal;
     public readonly int Vertical;
     public int MaxRepeats;
     public readonly bool RequiresAttack;
+    public CastleInfo Castle;
 
-    public Movement(int horizontal, int vertical, int maxRepeats = 1, bool requiresAttack = false)
+    public Movement(int horizontal, int vertical, int maxRepeats = 1, bool requiresAttack = false, CastleInfo castleInfo = null)
     {
         Horizontal = horizontal;
         Vertical = vertical;
         MaxRepeats = maxRepeats;
         RequiresAttack = requiresAttack;
+        Castle = castleInfo;
     }
 }
 

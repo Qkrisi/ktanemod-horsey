@@ -73,13 +73,13 @@ namespace ChessModule.Pieces
             return Callback(MoveString);
         }
 
-        public void HandleMove(Position NewPosition)
+        public void HandleMove(Position NewPosition, bool SkipSubmit = false)
         {
             Debug.LogFormat("New position: {0}", NewPosition.ToString());
             Module.SetAllNone();
             Module.EnPassant.X = -1;
             Module.EnPassant.Y = -1;
-            Module.StartCoroutine(MovePiece(NewPosition));
+            Module.StartCoroutine(MovePiece(NewPosition, SkipSubmit));
         }
 
         IEnumerator MoveTo(Position NewPosition)
@@ -111,15 +111,20 @@ namespace ChessModule.Pieces
                 ? pos
                 : String.Format("{0}{1}", ReversedChars[pos[0]], 9 - int.Parse(pos[1].ToString()));
         }
+
+        private string PositionToA1(Position position)
+        {
+            return ReverseA1(String.Format("{0}{1}", Position.Letters[position.X], position.Y + 1));
+        }
         
-        IEnumerator MovePiece(Position NewPosition)
+        IEnumerator MovePiece(Position NewPosition, bool SkipSubmit)
         {
             SetInteraction(InteractionType.None);
             yield return MoveTo(NewPosition);
             Position OldPosition = CurrentPosition;
             Func<string, bool> CB = MoveString =>
             {
-                if (!Module.SubmitMovement(MoveString))
+                if (!SkipSubmit && !Module.SubmitMovement(MoveString))
                 {
                     Debug.Log("Moving back");
                     Module.StartCoroutine(MoveTo(OldPosition));
@@ -131,9 +136,7 @@ namespace ChessModule.Pieces
                 //Piece.transform.localPosition = RelativeToAbsolute(NewPosition);
                 return true;
             };
-            string pos1 = String.Format("{0}{1}", Position.Letters[CurrentPosition.X], CurrentPosition.Y + 1);
-            string pos2 = String.Format("{0}{1}", Position.Letters[NewPosition.X], NewPosition.Y + 1);
-            if (AfterMove(NewPosition, String.Format("{0}{1}", ReverseA1(pos1), ReverseA1(pos2)), CB))
+            if (AfterMove(NewPosition, String.Format("{0}{1}", PositionToA1(CurrentPosition), PositionToA1(NewPosition)), CB))
             {
                 CurrentPosition = NewPosition;
                 Module.Kings[OtherColor].ToggleCheckMove();

@@ -6,6 +6,8 @@ using ChessModule.Pieces;
 
 public class qkChessModule : MonoBehaviour
 {
+    public bool EnableCheckCastle;
+    
     private ChessModuleService.Puzzle CurrentPuzzle;
 
     public GameObject PiecePrefab;
@@ -138,11 +140,9 @@ public class qkChessModule : MonoBehaviour
         for (int i = 0; i <= 7; i++)
         {
             int j = -1;
-            Debug.LogFormat("New row: {0}", Positions[i]);
             foreach(char piece in Positions[i])
             {
                 j += 1;
-                Debug.LogFormat("Got to char: {0}", piece);
                 int col = PlayerColor == 'W' ? i : 7 - i;
                 int row = PlayerColor == 'W' ? j : 7 - j;
                 Position pos = new Position(row, col);
@@ -234,7 +234,14 @@ public class qkChessModule : MonoBehaviour
                 if (!IsValid(CurrentPosition))
                     break;
                 ChessPiece OtherPiece = Board[CurrentPosition.Y, CurrentPosition.X];
-                if(SelectedPiece.CanAttack(CurrentPosition, movement.RequiresAttack) && !Kings[PlayerColor].IsInCheck(CurrentPosition, SelectedPiece.CurrentPosition, SelectedPiece))
+                List<Position> FillPositions = new List<Position>() {CurrentPosition};
+                List<Position> EmptyPositions = new List<Position>() {SelectedPiece.CurrentPosition};
+                if (EnableCheckCastle && movement.Castle != null)
+                {
+                    FillPositions.Add(movement.Castle.FillPosition);
+                    EmptyPositions.Add(movement.Castle.EmptyPosition);
+                }
+                if(SelectedPiece.CanAttack(CurrentPosition, movement.RequiresAttack) && !Kings[PlayerColor].IsInCheck(FillPositions.ToArray(), EmptyPositions.ToArray(), SelectedPiece, !EnableCheckCastle || movement.Castle == null ? null : (Position?)movement.Castle.FillPosition))
                     OtherPiece.SetInteraction(InteractionType.Move);
                 if (OtherPiece.type != PieceType.Empty)
                     break;

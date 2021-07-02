@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace ChessModule.Pieces
 {
@@ -11,22 +12,32 @@ namespace ChessModule.Pieces
         
         private bool HasMoved;
 
-        private bool IsEmpty(int col)
+        private bool IsEmpty(int row)
         {
-            return Module.Board[col, 7].type == PieceType.Empty;
+            return Module.Board[7, row].type == PieceType.Empty;
+        }
+
+        private bool CastleCheck(int row)
+        {
+            return IsInCheck(new Position[] {new Position(row, 7)}, new Position[] {CurrentPosition}, this);
         }
 
         public override Movement[] GetPossibleMovements(Position position)
         {
             var moves = base.GetPossibleMovements(position).ToList();
-            if (!HasMoved)
+            if (!HasMoved && Color == PlayerColor)
             {
-                ChessPiece QueenPiece = Module.Board[0, 7];
-                ChessPiece KingPiece = Module.Board[7, 7];
-                if (QueenCastling && QueenPiece.type == PieceType.Rook && !((Rook) QueenPiece).HasMoved && Enumerable.Range(1, 3).All(IsEmpty))
-                    moves.Add(new Movement(-2, 0));
-                if (KingCastling && KingPiece.type == PieceType.Rook && !((Rook) KingPiece).HasMoved && Enumerable.Range(5, 2).All(IsEmpty))
-                    moves.Add(new Movement(2, 0));
+                bool Reverse = Color == 'B';
+                ChessPiece QueenPiece = Module.Board[7, Reverse ? 7 : 0];
+                ChessPiece KingPiece = Module.Board[7, Reverse ? 0 : 7];
+                if (QueenCastling && QueenPiece.type == PieceType.Rook && !((Rook) QueenPiece).HasMoved &&
+                    Enumerable.Range(Reverse ? 4 : 1, 3).All(IsEmpty) && !CastleCheck(Reverse ? 4 : 3))
+                    moves.Add(new Movement(Reverse ? 2 : -2, 0,
+                        castleInfo: new CastleInfo(QueenPiece.CurrentPosition, new Position(Reverse ? 4 : 3, 7))));
+                if (KingCastling && KingPiece.type == PieceType.Rook && !((Rook) KingPiece).HasMoved &&
+                    Enumerable.Range(Reverse ? 1 : 5, 2).All(IsEmpty) && !CastleCheck(Reverse ? 2 : 5))
+                    moves.Add(new Movement(Reverse ? -2 : 2, 0,
+                        castleInfo: new CastleInfo(KingPiece.CurrentPosition, new Position(Reverse ? 2 : 5, 7))));
             }
             return moves.ToArray();
         }
@@ -36,13 +47,13 @@ namespace ChessModule.Pieces
             if (Callback(MoveString))
             {
                 HasMoved = true;
+                bool Reverse = Color == 'B';
                 if (NewPosition.X - CurrentPosition.X == 2)
-                    Module.Board[7, 7].HandleMove(new Position(5, 7));
+                    Module.Board[7, 7].HandleMove(new Position(Reverse ? 4 : 5, 7), true);
                 if (NewPosition.X - CurrentPosition.X == -2)
-                    Module.Board[0, 7].HandleMove(new Position(3, 7));
+                    Module.Board[7, 0].HandleMove(new Position(Reverse ? 2 : 3, 7), true);
                 return true;
             }
-
             return false;
         }
 
@@ -53,16 +64,15 @@ namespace ChessModule.Pieces
 
         public List<Position> CheckCache = new List<Position>();
 
-        public bool IsInCheck(Position? Fill = null, Position? Empty = null, ChessPiece AskingPiece = null)
+        public bool IsInCheck(Position[] Fill = null, Position[] Empty = null, ChessPiece AskingPiece = null, Position? CastleRook = null)
         {
-            Position FillPosition = Fill ?? new Position(-1, -1);
-            Position EmptyPosition = Empty ?? new Position(-1, -1);
-            if (CheckCache.Contains(EmptyPosition))
-                return true;
+            /*if (CheckCache.Contains(EmptyPosition))
+                return true;*/
+            Position CastlePos = CastleRook ?? new Position(-1, -1);
             foreach (var piece in Module.Board)
             {
                 Position PiecePosition = piece.CurrentPosition;
-                if (piece.Color == OtherColor && !piece.CurrentPosition.Equals(FillPosition))
+                if (piece.Color == OtherColor && (Fill==null || !Fill.Contains(PiecePosition)))
                 {
                     foreach (var movement in piece.PossibleMovements)
                     {
@@ -73,14 +83,18 @@ namespace ChessModule.Pieces
                             MovementPosition.Y += movement.Vertical;
                             if (!qkChessModule.IsValid(MovementPosition))
                                 break;
-                            if (AskingPiece != this ? Module.Board[MovementPosition.Y, MovementPosition.X] == this : MovementPosition.Equals(FillPosition))
+                            bool FillContains = Fill != null && Fill.Contains(MovementPosition);
+                            bool EmptyContains = Empty != null && Empty.Contains(MovementPosition);
+                            if(MovementPosition.ToString() == "(2 7)")
+                                Debug.Log(FillContains);
+                            if (AskingPiece != this ? Module.Board[MovementPosition.Y, MovementPosition.X] == this : FillContains && !CastlePos.Equals(MovementPosition))
                             {
                                 /*if(Empty!=null)
                                     CheckCache.Add((Position)Empty);*/
                                 return true;
                             }
-                            PieceType type = MovementPosition.Equals(FillPosition) ? PieceType.Pawn :
-                                MovementPosition.Equals(EmptyPosition) ? PieceType.Empty :
+                            PieceType type = FillContains ? PieceType.Pawn :
+                                EmptyContains ? PieceType.Empty :
                                 Module.Board[MovementPosition.Y, MovementPosition.X].type;
                             if (type != PieceType.Empty)
                                 break;

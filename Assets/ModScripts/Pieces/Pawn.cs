@@ -37,7 +37,6 @@ namespace ChessModule.Pieces
         {
             if (NewPosition.Y == (PlayerColor == Color ? 0 : 7))
             {
-                Position OldPosition = CurrentPosition;
                 Module.SetAllNone();
                 Module.promotionHandler.OnSelected = (piece, material) =>
                 {
@@ -59,7 +58,7 @@ namespace ChessModule.Pieces
             if (Callback(MoveString))
             {
                 int Delta = CurrentPosition.Y - NewPosition.Y;
-                int decrement = Delta < 0 ? -1 : 1;
+                int decrement = Color != PlayerColor ? -1 : 1;
                 if (Module.EnPassant.Equals(NewPosition))
                     Module.Board[NewPosition.Y + decrement, NewPosition.X].Destroy();
                 if (FirstMove && Math.Abs(Delta) == 2)
@@ -67,7 +66,6 @@ namespace ChessModule.Pieces
                     Module.EnPassant.X = NewPosition.X;
                     Module.EnPassant.Y = CurrentPosition.Y - decrement;
                 }
-
                 FirstMove = false;
                 return true;
             }
@@ -81,7 +79,7 @@ namespace ChessModule.Pieces
             {
                 new Movement(0, -1)
             };
-            FirstMove = position.Y == 6;
+            FirstMove = position.Y == (Color == PlayerColor ? 6 : 1);
         }
     }
 }
