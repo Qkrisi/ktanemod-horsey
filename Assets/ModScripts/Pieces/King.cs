@@ -48,10 +48,13 @@ namespace ChessModule.Pieces
             {
                 HasMoved = true;
                 bool Reverse = Color == 'B';
+                int Col = Color == PlayerColor ? 7 : 0;
+                if (Col == 0)
+                    Reverse = !Reverse;
                 if (NewPosition.X - CurrentPosition.X == 2)
-                    Module.Board[7, 7].HandleMove(new Position(Reverse ? 4 : 5, 7), true);
+                    Module.Board[Col, 7].HandleMove(new Position(Reverse ? 4 : 5, Col), true);
                 if (NewPosition.X - CurrentPosition.X == -2)
-                    Module.Board[7, 0].HandleMove(new Position(Reverse ? 2 : 3, 7), true);
+                    Module.Board[Col, 0].HandleMove(new Position(Reverse ? 2 : 3, Col), true);
                 return true;
             }
             return false;
@@ -85,8 +88,6 @@ namespace ChessModule.Pieces
                                 break;
                             bool FillContains = Fill != null && Fill.Contains(MovementPosition);
                             bool EmptyContains = Empty != null && Empty.Contains(MovementPosition);
-                            if(MovementPosition.ToString() == "(2 7)")
-                                Debug.Log(FillContains);
                             if (AskingPiece != this ? Module.Board[MovementPosition.Y, MovementPosition.X] == this : FillContains && !CastlePos.Equals(MovementPosition))
                             {
                                 /*if(Empty!=null)
