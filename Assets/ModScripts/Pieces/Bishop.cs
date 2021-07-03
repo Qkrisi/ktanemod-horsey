@@ -1,9 +1,11 @@
+using UnityEngine;
+
 namespace ChessModule.Pieces
 {
     public class Bishop : ChessPiece
     {
-        public Bishop(Position position, string material, qkChessModule module, char PlayColor) : 
-            base(position, material, module, PlayColor, PieceType.Bishop)
+        public Bishop(Position position, string material, qkChessModule module, char PlayColor, GameObject PieceOBJ) : 
+            base(position, material, module, PlayColor, PieceType.Bishop, PieceOBJ)
         {
             _PossibleMovements = new Movement[]
             {

@@ -28,7 +28,7 @@ namespace ChessModule.Pieces
     public abstract class ChessPiece
     {
         protected qkChessModule Module;
-        protected GameObject Piece;
+        public GameObject Piece;
         private KMSelectable ModuleSelectable;
         private KMSelectable PieceSelectable;
         public readonly char Color;
@@ -45,7 +45,7 @@ namespace ChessModule.Pieces
 
         private bool SelectableEnabled;
 
-        protected bool ForceMoveObject = false;
+        public bool ForceMoveObject;
 
         public virtual Movement[] GetPossibleMovements(Position position)
         {
@@ -131,6 +131,7 @@ namespace ChessModule.Pieces
                 
                 Module.Board[NewPosition.Y, NewPosition.X].Destroy(OldPosition);
                 Module.Board[NewPosition.Y, NewPosition.X] = this;
+                Module.Board[OldPosition.Y, OldPosition.X].ResetPosition();
                 //Piece.transform.localPosition = RelativeToAbsolute(NewPosition);
                 return true;
             };
@@ -139,6 +140,7 @@ namespace ChessModule.Pieces
                 CurrentPosition = NewPosition;
                 Module.Kings[OtherColor].ToggleCheckMove();
                 Module.Kings[Color].MoveObject.SetActive(false);
+                Module.Kings[Color].ForceMoveObject = false;
                 Module.ClearKingCaches();
                 if (type != PieceType.Pawn && type != PieceType.Empty)
                 {
@@ -148,38 +150,40 @@ namespace ChessModule.Pieces
             }
         }
 
-        public void Destroy(Position position)
+        public void Destroy(Position position, GameObject PieceOBJ = null)
         {
             Module.ToggleHighlight(position, false, true);
             if (!CurrentPosition.Equals(position))
                 Module.ToggleHighlight(CurrentPosition, false, true);
             SetInteraction(InteractionType.None);
-            Object.Destroy(Piece);
-            Module.Board[position.Y, position.X] = new Empty(position, Module, PlayerColor);
+            PieceSelectable.OnInteract = null;
+            //Object.Destroy(Piece);
+            Module.Board[position.Y, position.X] = new Empty(position, Module, PlayerColor, PieceOBJ ?? Piece);
         }
 
-        public void Destroy()
+        public void Destroy(GameObject PieceOBJ = null)
         {
-            Destroy(CurrentPosition);
+            Destroy(CurrentPosition, PieceOBJ);
         }
 
         private Vector3 RelativeToAbsolute(Position position)
         {
             return new Vector3(-0.0138f-0.0174f*position.X, 0.0158f, 0.0131f+0.017f*position.Y);
         }
-        
-        protected ChessPiece(Position position, string material, qkChessModule module, char PlayColor, PieceType _type)
+
+        protected ChessPiece(Position position, string material, qkChessModule module, char PlayColor, PieceType _type, GameObject PieceOBJ)
         {
             type = _type;
             PlayerColor = PlayColor;
             var splitted = material.Split('_');
             PieceName = material;
+            Debug.LogFormat("Creating {0} with {1} at {2}", GetType().Name, material, position.ToString());
             Color = splitted[1][0];
             OtherColor = Color == 'W' ? 'B' : 'W';
             Module = module;
-            Piece = Object.Instantiate(Module.PiecePrefab, Module.transform.Find("Objects").Find("Pieces"));
-            Piece.transform.localPosition = RelativeToAbsolute(position);
+            Piece = PieceOBJ ?? Module.PiecesObject.GetChild(Module.ChildCounter++).gameObject;
             CurrentPosition = position;
+            ResetPosition();
             MoveObject = Piece.transform.Find(type == PieceType.Empty ? "EmptyMove" : "Attack").gameObject;
             ModuleSelectable = Module.GetComponent<KMSelectable>();
             PieceSelectable = Piece.GetComponent<KMSelectable>();
@@ -188,17 +192,31 @@ namespace ChessModule.Pieces
             PieceSelectable.OnHighlightEnded += () => Module.ToggleHighlight(CurrentPosition, false);
             Material mat = Module.Materials[material];
             Renderer renderer = Piece.GetComponent<Renderer>();
-            if (mat == null)
-                renderer.enabled = false;
-            else renderer.material = mat;
+            renderer.material = mat;
+            renderer.enabled = mat != null;
+            PieceSelectable.OnInteract = HandleInteract;
             if(Color == PlayColor)
                 SetInteraction(InteractionType.Select);
         }
 
-        private bool Select()
+        public void ResetPosition()
+        {
+            Piece.transform.localPosition = RelativeToAbsolute(CurrentPosition);
+        }
+
+        bool HandleInteract()
+        {
+            return LastInteraction != InteractionType.None && (LastInteraction == InteractionType.Select ? Select() : Move());
+        }
+
+        public bool Select()
         {
 			if(Module.SelectEnabled)
 			{
+                Debug.LogFormat("Clicked on {0} at {1}", PieceName, CurrentPosition.ToString());
+                Debug.LogFormat("At 1-1: {0}, {1} {2}", Module.Board[1, 1].PieceName, Module.Board[1, 1].CurrentPosition.ToString(), Piece == Module.Board[1, 1].Piece);
+                //Debug.LogFormat("At 1-1: {0}, {1}", Module.Board[0, 0].type, Module.Board[0, 0].Color);
+                //Module.Board[0, 0].Interact();
 				Module.PlaySound(Piece);
 				Module.SelectedPiece = this;
 				Module.SelectPiece();
@@ -214,21 +232,24 @@ namespace ChessModule.Pieces
             return false;
         }
 
+        private InteractionType LastInteraction;
+
         public void SetInteraction(InteractionType interaction)
         {
-            MoveObject.SetActive(ForceMoveObject);
-            SelectableEnabled = true;
-            var children = ModuleSelectable.Children.ToList();
-            switch (interaction)
+            LastInteraction = interaction;
+            SelectableEnabled = interaction != InteractionType.None;
+            MoveObject.SetActive(ForceMoveObject || interaction == InteractionType.Move);
+            /*switch (interaction)
             {
                 case InteractionType.None:
-                    if (children.Contains(PieceSelectable))
+                    if(CurrentPosition.ToString() == "(0 0)" && type == PieceType.Queen)
+                        Debug.Log("Setting to none");
+                    PieceSelectable.OnInteract = () =>
                     {
-                        children.Remove(PieceSelectable);
-                        ModuleSelectable.Children = children.ToArray();
-                        ModuleSelectable.UpdateChildren();
-                    }
-                    PieceSelectable.OnInteract = () => false;
+                        Debug.LogFormat("Last interaction: {0}, Type: {1}, Color: {2}, Class type: {3}", LastInteraction, type, Color, GetType().Name);
+                        return false;
+                    };
+                    PieceSelectable.enabled = false;
                     SelectableEnabled = false;
                     break;
                 case InteractionType.Move:
@@ -239,14 +260,10 @@ namespace ChessModule.Pieces
                     PieceSelectable.OnInteract = Select;
                     goto default;
                 default:
-                    if (!children.Contains(PieceSelectable))
-                    {
-                        ModuleSelectable.Children =
-                            ModuleSelectable.Children.Concat(new KMSelectable[] {PieceSelectable}).ToArray();
-                        ModuleSelectable.UpdateChildren();
-                    }
+                    PieceSelectable.enabled = true;
+                    SelectableEnabled = true;
                     break;
-            }
+            }*/
         }
     }
 }

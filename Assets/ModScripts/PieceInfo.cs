@@ -8,7 +8,7 @@ public class PieceInfo
 
     public ChessPiece Create(Position position, qkChessModule module, char PlayColor)
     {
-        return (ChessPiece) Activator.CreateInstance(type, position, MaterialName, module, PlayColor);
+        return (ChessPiece) Activator.CreateInstance(type, position, MaterialName, module, PlayColor, null);
     }
     
     public PieceInfo(Type _type, string _MaterialName)

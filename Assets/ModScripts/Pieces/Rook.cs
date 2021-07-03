@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace ChessModule.Pieces
 {
@@ -16,8 +17,8 @@ namespace ChessModule.Pieces
             return false;
         }
 
-        public Rook(Position position, string material, qkChessModule module, char PlayColor) : 
-            base(position, material, module, PlayColor, PieceType.Rook)
+        public Rook(Position position, string material, qkChessModule module, char PlayColor, GameObject PieceOBJ) : 
+            base(position, material, module, PlayColor, PieceType.Rook, PieceOBJ)
         {
             _PossibleMovements = new Movement[]
             {

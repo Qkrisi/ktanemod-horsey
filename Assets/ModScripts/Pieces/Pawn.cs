@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using UnityEngine;
 
 namespace ChessModule.Pieces
 {
@@ -42,12 +43,13 @@ namespace ChessModule.Pieces
                     MoveString += PieceName == 'K' ? 'N' : PieceName;
                     if (Callback(MoveString))
                     {
-                        Destroy();
+                        Destroy(Module.Board[CurrentPosition.Y, CurrentPosition.X].Piece);
                         Module.Board[NewPosition.Y, NewPosition.X] =
-                            (ChessPiece) Activator.CreateInstance(piece, NewPosition, material, Module, PlayerColor);
+                            (ChessPiece) Activator.CreateInstance(piece, NewPosition, material, Module, PlayerColor, Piece);
                         CurrentPosition = NewPosition;
                         Module.Kings[OtherColor].ToggleCheckMove();
                         Module.Kings[Color].MoveObject.SetActive(false);
+                        Module.Kings[Color].ForceMoveObject = false;
                         Module.ClearKingCaches();
                         Module.EnPassant.X = -1;
                         Module.EnPassant.Y = -1;
@@ -76,8 +78,8 @@ namespace ChessModule.Pieces
             return false;
         }
         
-        public Pawn(Position position, string material, qkChessModule module, char PlayColor) : 
-            base(position, material, module, PlayColor, PieceType.Pawn)
+        public Pawn(Position position, string material, qkChessModule module, char PlayColor, GameObject PieceOBJ) : 
+            base(position, material, module, PlayColor, PieceType.Pawn, PieceOBJ)
         {
             _PossibleMovements = new Movement[]
             {

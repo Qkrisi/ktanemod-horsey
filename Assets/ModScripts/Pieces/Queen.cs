@@ -1,9 +1,11 @@
+using UnityEngine;
+
 namespace ChessModule.Pieces
 {
     public class Queen : ChessPiece
     {
-        public Queen(Position position, string material, qkChessModule module, char PlayColor) :
-            base(position, material, module, PlayColor, PieceType.Queen)
+        public Queen(Position position, string material, qkChessModule module, char PlayColor, GameObject PieceOBJ) :
+            base(position, material, module, PlayColor, PieceType.Queen, PieceOBJ)
         {
             _PossibleMovements = new Movement[]
             {

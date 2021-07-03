@@ -112,8 +112,8 @@ namespace ChessModule.Pieces
             MoveObject.SetActive(ForceMoveObject);
         }
 
-        public King(Position position, string material, qkChessModule module, char PlayColor) :
-            base(position, material, module, PlayColor, PieceType.King)
+        public King(Position position, string material, qkChessModule module, char PlayColor, GameObject PieceOBJ) :
+            base(position, material, module, PlayColor, PieceType.King, PieceOBJ)
         {
             _PossibleMovements = new Movement[]
             {

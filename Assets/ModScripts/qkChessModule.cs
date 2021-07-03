@@ -29,6 +29,11 @@ public class qkChessModule : MonoBehaviour
     public char[] Castlings = new char[] {};
 
     public Position EnPassant;
+    
+    public Transform PiecesObject;
+
+    [HideInInspector]
+    public int ChildCounter;
 
     private ChessPiece _SelectedPiece;
     
@@ -162,7 +167,7 @@ public class qkChessModule : MonoBehaviour
                 Position pos = new Position(row, col);
                 if (char.IsDigit(piece))
                 {
-                    Board[col, row] = new Empty(pos, this, PlayerColor);
+                    Board[col, row] = new Empty(pos, this, PlayerColor, null);
                     int n = int.Parse(piece.ToString()) - 1;
                     for (int a = 0; a < n; a++)
                     {
@@ -170,7 +175,7 @@ public class qkChessModule : MonoBehaviour
                         col = PlayerColor == 'W' ? i : 7 - i;
                         row = PlayerColor == 'W' ? j : 7 - j;
                         pos = new Position(row, col);
-                        Board[col, row] = new Empty(pos, this, PlayerColor);
+                        Board[col, row] = new Empty(pos, this, PlayerColor, null);
                     }
                 }
                 else
@@ -227,8 +232,11 @@ public class qkChessModule : MonoBehaviour
 
     public void ResetSelections(Position? position)
     {
-        foreach(var piece in Board)
-            piece.SetInteraction(piece.Color != PlayerColor || (position !=null && piece.CurrentPosition.Equals((Position)position)) ? InteractionType.None : InteractionType.Select);
+        foreach (var piece in Board)
+            piece.SetInteraction(
+                piece.Color != PlayerColor || (position != null && piece.CurrentPosition.Equals((Position) position))
+                    ? InteractionType.None
+                    : InteractionType.Select);
     }
 
     public void SelectPiece()
@@ -261,7 +269,7 @@ public class qkChessModule : MonoBehaviour
         }
     }
 
-
+    
     public Transform HighlightObject;
 
     private Dictionary<string, GameObject> Highlights = new Dictionary<string, GameObject>();
