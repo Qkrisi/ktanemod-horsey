@@ -114,7 +114,8 @@ public class qkChessModule : MonoBehaviour
 
     private void Log(string message, params object[] args)
     {
-        Debug.LogFormat("[Horsey #{0}] {1}", ModuleID, String.Format(message, args));
+        if(CurrentPlayer == PlayerColor)
+            Debug.LogFormat("[Horsey #{0}] {1}", ModuleID, String.Format(message, args));
     }
 
     void HandleOpponent()
@@ -132,6 +133,7 @@ public class qkChessModule : MonoBehaviour
     private void TogglePlayer()
     {
         CurrentPlayer = CurrentPlayer == 'W' ? 'B' : 'W';
+        Log("Next expected move: {0}", CurrentPuzzle.CurrentMove.Value);
         if (CurrentPlayer != PlayerColor)
             HandleOpponent();
         else ResetSelections(null);
