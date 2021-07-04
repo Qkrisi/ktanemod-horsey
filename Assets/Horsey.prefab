@@ -5879,6 +5879,7 @@ GameObject:
   - component: {fileID: 4829065063104762}
   - component: {fileID: 33140895442769920}
   - component: {fileID: 23841255369997396}
+  - component: {fileID: 114568387427395462}
   m_Layer: 0
   m_Name: CurrentPlayerDisplay
   m_TagString: Untagged
@@ -40031,6 +40032,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HighlightScale: {x: 0, y: 0, z: 0}
   OutlineAmount: 0
+--- !u!114 &114568387427395462
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1544225024294092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1005838349, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShaderNames:
+  - Standard
 --- !u!114 &114570219253291306
 MonoBehaviour:
   m_ObjectHideFlags: 1

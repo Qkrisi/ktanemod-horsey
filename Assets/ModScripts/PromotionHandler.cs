@@ -35,7 +35,6 @@ public class PromotionHandler : MonoBehaviour
             gameObject.SetActive(true);
             if (Module.AutoPromote != '_')
             {
-                Debug.LogFormat("Received autopromote: {0}", Module.AutoPromote);
                 var pieceInfo = Module.PieceInfos[Module.AutoPromote];
                 _OnSelected(pieceInfo.type, pieceInfo.MaterialName);
                 OnSelected = null;

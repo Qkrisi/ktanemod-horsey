@@ -161,7 +161,7 @@ public partial class qkChessModule : MonoBehaviour
 
     private void ParseFEN()
     {
-        Log("Game URL: {0}", CurrentPuzzle.TrainingUrl);
+        //Log("Game URL: {0}", CurrentPuzzle.TrainingUrl);
         Log("FEN: {0}", CurrentPuzzle.FEN);
         var splitted = CurrentPuzzle.FEN.Split(' ');
         PlayerColor = splitted[1] == "w" ? 'B' : 'W';
