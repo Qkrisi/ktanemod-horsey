@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using ChessModule.Pieces;
 
-public class qkChessModule : MonoBehaviour
+public partial class qkChessModule : MonoBehaviour
 {
     public bool EnableCheckCastle;
     
@@ -75,13 +75,22 @@ public class qkChessModule : MonoBehaviour
     private char PlayerColor;
 
     [HideInInspector]
-    public char AutoPromote;
+    public char AutoPromote = '_';
 
     private static int ModuleIDCounter;
     private int ModuleID;
     
     [HideInInspector]
     public bool SelectEnabled;
+
+    [SerializeField]
+    private Material WhiteMaterial;
+    
+    [SerializeField]
+    private Material GrayMaterial;
+
+    [SerializeField]
+    private Renderer CurrentPlayerDisplay;
 
     public bool SubmitMovement(string MovementString)
     {
@@ -96,6 +105,7 @@ public class qkChessModule : MonoBehaviour
                 SetAllNone();
                 Log("All moves were successful! Solving module...");
                 GetComponent<KMBombModule>().HandlePass();
+                CurrentPlayerDisplay.enabled = false;
             }
             else TogglePlayer(); 
             return true;
@@ -116,7 +126,6 @@ public class qkChessModule : MonoBehaviour
         foreach (Transform child in highlight)
             child.GetComponent<Renderer>().material = color;
     }
-
     private void Log(string message, params object[] args)
     {
         if(CurrentPlayer == PlayerColor)
@@ -134,10 +143,16 @@ public class qkChessModule : MonoBehaviour
             AutoPromote = AutoPromote.ToString().ToUpperInvariant()[0];
         Board[StartPos.Y, StartPos.X].HandleMove(Position.FromA1(MoveString.Substring(2, 2), reverse));
     }
+
+    private void SetMaterial()
+    {
+        CurrentPlayerDisplay.material = CurrentPlayer == 'W' ? WhiteMaterial : GrayMaterial;
+    }
     
     private void TogglePlayer()
     {
         CurrentPlayer = CurrentPlayer == 'W' ? 'B' : 'W';
+        SetMaterial();
         Log("Next expected move: {0}", CurrentPuzzle.CurrentMove.Value);
         if (CurrentPlayer != PlayerColor)
             HandleOpponent();
@@ -154,6 +169,7 @@ public class qkChessModule : MonoBehaviour
             EnPassant = Position.FromA1(splitted[3], PlayerColor == 'W');
         Castlings = splitted[2].ToCharArray();
         CurrentPlayer = splitted[1].ToUpperInvariant()[0];
+        SetMaterial();
         var Positions = splitted[0].Split('/');
         int AddEmpty = 0;
         for (int i = 0; i <= 7; i++)
@@ -212,6 +228,7 @@ public class qkChessModule : MonoBehaviour
         ModuleID = ++ModuleIDCounter;
         if(Application.isEditor)
             Initialize();
+        Debug.LogFormat("[Horsey #{0}] Player color is {1}.", ModuleID, PlayerColor == 'W' ? "white" : "black");
         promotionHandler.Initialize(this, PlayerColor == 'W' ? "White" : "Black");
         foreach(var king in Kings.Values)
             king.ToggleCheckMove();

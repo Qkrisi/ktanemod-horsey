@@ -75,7 +75,6 @@ namespace ChessModule.Pieces
 
         public void HandleMove(Position NewPosition, bool SkipSubmit = false)
         {
-            Debug.LogFormat("New position: {0}", NewPosition.ToString());
             Module.SetAllNone();
             Module.StartCoroutine(MovePiece(NewPosition, SkipSubmit));
         }
@@ -124,7 +123,6 @@ namespace ChessModule.Pieces
             {
                 if (!SkipSubmit && !Module.SubmitMovement(MoveString))
                 {
-                    Debug.Log("Moving back");
                     Module.StartCoroutine(MoveTo(OldPosition));
                     return false;
                 }
@@ -177,7 +175,6 @@ namespace ChessModule.Pieces
             PlayerColor = PlayColor;
             var splitted = material.Split('_');
             PieceName = material;
-            Debug.LogFormat("Creating {0} with {1} at {2}", GetType().Name, material, position.ToString());
             Color = splitted[1][0];
             OtherColor = Color == 'W' ? 'B' : 'W';
             Module = module;
@@ -204,7 +201,7 @@ namespace ChessModule.Pieces
             Piece.transform.localPosition = RelativeToAbsolute(CurrentPosition);
         }
 
-        bool HandleInteract()
+        public bool HandleInteract()
         {
             return LastInteraction != InteractionType.None && (LastInteraction == InteractionType.Select ? Select() : Move());
         }
@@ -213,11 +210,7 @@ namespace ChessModule.Pieces
         {
 			if(Module.SelectEnabled)
 			{
-                Debug.LogFormat("Clicked on {0} at {1}", PieceName, CurrentPosition.ToString());
-                Debug.LogFormat("At 1-1: {0}, {1} {2}", Module.Board[1, 1].PieceName, Module.Board[1, 1].CurrentPosition.ToString(), Piece == Module.Board[1, 1].Piece);
-                //Debug.LogFormat("At 1-1: {0}, {1}", Module.Board[0, 0].type, Module.Board[0, 0].Color);
-                //Module.Board[0, 0].Interact();
-				Module.PlaySound(Piece);
+                Module.PlaySound(Piece);
 				Module.SelectedPiece = this;
 				Module.SelectPiece();
 			}
@@ -232,7 +225,7 @@ namespace ChessModule.Pieces
             return false;
         }
 
-        private InteractionType LastInteraction;
+        public InteractionType LastInteraction;
 
         public void SetInteraction(InteractionType interaction)
         {

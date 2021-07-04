@@ -63,4 +63,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d8acde71014e4e5bbeaea2d1334671b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _Puzzles: {fileID: 4900000, guid: f4d65c83d3f7c48739f87b94bfdfd3d8, type: 3}
+  _Puzzles: {fileID: 4900000, guid: 669b317df152b4d309bd1a2c96ec0283, type: 3}

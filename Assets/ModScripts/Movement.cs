@@ -56,8 +56,6 @@ public struct Position
     {
         pos = pos.ToUpperInvariant();
         Position _pos;
-        Debug.Log(pos);
-        Debug.Log(Array.IndexOf(Letters, pos[0]));
         _pos.X = Array.IndexOf(Letters, pos[0]);
         if (reverse)
             _pos.X = 7 - _pos.X;
