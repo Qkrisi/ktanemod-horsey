@@ -7,22 +7,25 @@ namespace ChessModule.Pieces
     public class Pawn : ChessPiece
     {
         private bool FirstMove;
+        private int VerticalMove;
 
         public override Movement[] GetPossibleMovements(Position position)
         {
             var moves = base.GetPossibleMovements(position).ToList();
-            if(CurrentPosition.Y > 0 && Module.Board[CurrentPosition.Y-1, CurrentPosition.X].type != PieceType.Empty)
+            var y2 = CurrentPosition.Y + VerticalMove;
+            if(y2 >= 0 && y2 <= 7 && Module.Board[y2, CurrentPosition.X].type != PieceType.Empty)
                 moves.RemoveAt(0);
             else if (FirstMove)
-                moves[0] = new Movement(0, -1, 2);
-            if (--position.Y >= 0)
+                moves[0] = new Movement(0, VerticalMove, 2, disableAttack: true);
+            position.Y += VerticalMove;
+            if (position.Y >= 0 && position.Y <= 7)
             {
                 position.X++;
                 if (position.X < 8 && CanAttack(position, true))
-                    moves.Add(new Movement(1, -1, requiresAttack: true));
+                    moves.Add(new Movement(1, VerticalMove, requiresAttack: true));
                 position.X -= 2;
                 if (position.X > -1 && CanAttack(position, true))
-                    moves.Add(new Movement(-1, -1, requiresAttack: true));
+                    moves.Add(new Movement(-1, VerticalMove, requiresAttack: true));
             }
             return moves.ToArray();
         }
@@ -46,6 +49,8 @@ namespace ChessModule.Pieces
                         Destroy(Module.Board[CurrentPosition.Y, CurrentPosition.X].Piece);
                         Module.Board[NewPosition.Y, NewPosition.X] =
                             (ChessPiece) Activator.CreateInstance(piece, NewPosition, material, Module, PlayerColor, Piece);
+                        if(Module.Solved)
+                            Module.Board[NewPosition.Y, NewPosition.X].SetInteraction(InteractionType.None);
                         CurrentPosition = NewPosition;
                         Module.Kings[OtherColor].ToggleCheckMove();
                         Module.Kings[Color].MoveObject.SetActive(false);
@@ -81,9 +86,10 @@ namespace ChessModule.Pieces
         public Pawn(Position position, string material, qkChessModule module, char PlayColor, GameObject PieceOBJ) : 
             base(position, material, module, PlayColor, PieceType.Pawn, PieceOBJ)
         {
+            VerticalMove = Color == PlayerColor ? -1 : 1;
             _PossibleMovements = new Movement[]
             {
-                new Movement(0, -1)
+                new Movement(0, VerticalMove, disableAttack: true)
             };
             FirstMove = position.Y == (Color == PlayerColor ? 6 : 1);
         }

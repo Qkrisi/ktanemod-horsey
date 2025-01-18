@@ -10,6 +10,7 @@ public class ChessModuleService : MonoBehaviour
     {
         public string PuzzleId { get; set; }
         public string FEN { get; set; }
+        public int MoveCount { get; set; }
         public LinkedListNode<string> CurrentMove { get; set; }
         public int Rating { get; set; }
         public int RatingDeviation { get; set; }
@@ -42,6 +43,7 @@ public class ChessModuleService : MonoBehaviour
             {
                 PuzzleId = line[0],
                 FEN = line[1],
+                MoveCount = moves.Count,
                 CurrentMove = moves.First,
                 Rating = int.Parse(line[3]),
                 RatingDeviation = int.Parse(line[4]),

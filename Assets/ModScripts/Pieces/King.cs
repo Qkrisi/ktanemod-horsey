@@ -52,9 +52,9 @@ namespace ChessModule.Pieces
                 if (Col == 0)
                     Reverse = !Reverse;
                 if (NewPosition.X - CurrentPosition.X == 2)
-                    Module.Board[Col, 7].HandleMove(new Position(Reverse ? 4 : 5, Col), true);
+                    Module.Board[Col, 7].HandleMove(new Position(Reverse ? 4 : 5, Col), true, false);
                 if (NewPosition.X - CurrentPosition.X == -2)
-                    Module.Board[Col, 0].HandleMove(new Position(Reverse ? 2 : 3, Col), true);
+                    Module.Board[Col, 0].HandleMove(new Position(Reverse ? 2 : 3, Col), true, false);
                 return true;
             }
             return false;
@@ -79,6 +79,8 @@ namespace ChessModule.Pieces
                 {
                     foreach (var movement in piece.PossibleMovements)
                     {
+                        if (movement.DisableAttack)
+                            continue;
                         Position MovementPosition = PiecePosition;
                         for (int i = 0; i < movement.MaxRepeats; i++)
                         {

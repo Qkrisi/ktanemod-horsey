@@ -73,9 +73,10 @@ namespace ChessModule.Pieces
             return Callback(MoveString);
         }
 
-        public void HandleMove(Position NewPosition, bool SkipSubmit = false)
+        public void HandleMove(Position NewPosition, bool SkipSubmit = false, bool setNone = true)
         {
-            Module.SetAllNone();
+            if(setNone)
+                Module.SetAllNone();
             Module.StartCoroutine(MovePiece(NewPosition, SkipSubmit));
         }
 

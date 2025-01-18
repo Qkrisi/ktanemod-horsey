@@ -35,6 +35,8 @@ public partial class qkChessModule : MonoBehaviour
     [HideInInspector]
     public int ChildCounter;
 
+    internal bool Solved;
+    
     private ChessPiece _SelectedPiece;
     
     public ChessPiece SelectedPiece
@@ -92,6 +94,11 @@ public partial class qkChessModule : MonoBehaviour
     [SerializeField]
     private Renderer CurrentPlayerDisplay;
 
+    [SerializeField]
+    private TextMesh MoveCounter;
+
+    private int MoveCount;
+
     public bool SubmitMovement(string MovementString)
     {
         MovementString = MovementString.ToLowerInvariant();
@@ -100,12 +107,15 @@ public partial class qkChessModule : MonoBehaviour
         {
             Log("Correct move. Advancing...");
             CurrentPuzzle.CurrentMove = CurrentPuzzle.CurrentMove.Next;
+            MoveCounter.text = (--MoveCount).ToString();
             if (CurrentPuzzle.CurrentMove == null)
             {
                 SetAllNone();
                 Log("All moves were successful! Solving module...");
                 GetComponent<KMBombModule>().HandlePass();
+                Solved = true;
                 CurrentPlayerDisplay.enabled = false;
+                MoveCounter.text = "";
             }
             else TogglePlayer(); 
             return true;
@@ -213,21 +223,20 @@ public partial class qkChessModule : MonoBehaviour
         EnPassant.X = -1;
         EnPassant.Y = -1;
         CurrentPuzzle = ChessModuleService.ParsedPuzzle;
+        MoveCount = CurrentPuzzle.MoveCount;
+        MoveCounter.text = MoveCount.ToString();
         ParseFEN();
     }
     
     void Awake()
     {
         ModuleIDCounter = 0;
-        if(!Application.isEditor)
-            Initialize();
     }
 
     void Start()
     {
         ModuleID = ++ModuleIDCounter;
-        if(Application.isEditor)
-            Initialize();
+        Initialize();
         Debug.LogFormat("[Horsey #{0}] Player color is {1}.", ModuleID, PlayerColor == 'W' ? "white" : "black");
         promotionHandler.Initialize(this, PlayerColor == 'W' ? "White" : "Black");
         foreach(var king in Kings.Values)

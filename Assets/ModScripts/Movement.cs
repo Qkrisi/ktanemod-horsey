@@ -19,15 +19,17 @@ public struct Movement
     public readonly int Vertical;
     public int MaxRepeats;
     public readonly bool RequiresAttack;
+    public readonly bool DisableAttack;
     public CastleInfo Castle;
 
-    public Movement(int horizontal, int vertical, int maxRepeats = 1, bool requiresAttack = false, CastleInfo castleInfo = null)
+    public Movement(int horizontal, int vertical, int maxRepeats = 1, bool requiresAttack = false, CastleInfo castleInfo = null, bool disableAttack = false)
     {
         Horizontal = horizontal;
         Vertical = vertical;
         MaxRepeats = maxRepeats;
         RequiresAttack = requiresAttack;
         Castle = castleInfo;
+        DisableAttack = disableAttack;
     }
 }
 
